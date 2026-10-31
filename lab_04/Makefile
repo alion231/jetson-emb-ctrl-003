@@ -1,5 +1,5 @@
 # Target executable name
-TARGET = robotest
+TARGET = game_controller
 
 # Compiler and optimization flags
 CC = gcc
@@ -9,7 +9,7 @@ CFLAGS = -Wall -Wextra -O3
 LIBS = -lgpiod -lpthread -lm
 
 # Automatically find all .c files in the current directory
-SRCS = $(wildcard *.c)
+SRCS = game_controller.c speed_control.c encoder.c pwm.c
 OBJS = $(SRCS:.c=.o)
 
 # Default rule to build the application

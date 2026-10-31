@@ -110,7 +110,7 @@ void speed_control_init(void)
            db_pos, db_neg, gain, tau);
 }
 
-void speed_control(int motor, double target_speed)
+double speed_control_measure(int motor)
 {
     int enc = ENCODER(motor);
 
@@ -133,6 +133,13 @@ void speed_control(int motor, double target_speed)
         measured = 0.0;
 
     speed_f += DT / (FILTER_TAU + DT) * (measured - speed_f);
+    return measured;
+}
+
+double speed_control_compute(double target_speed, double limit)
+{
+    limit = fmax(0.0, fmin(limit, MAX_DUTY));
+
     double error = target_speed - speed_f;
 
     double ff = target_speed / gain;
@@ -143,11 +150,20 @@ void speed_control(int motor, double target_speed)
         ff -= db_neg * fade;
 
     double u = ff + kp * error + integ + ki * error * DT;
-    if (fabs(u) < MAX_DUTY)
+    if (fabs(u) < limit)
         integ += ki * error * DT;
-    u = fmax(-MAX_DUTY, fmin(MAX_DUTY, ff + kp * error + integ));
+    return fmax(-limit, fmin(limit, ff + kp * error + integ));
+}
 
-    pwm_set_duty(motor, (float)u);
+void speed_control_reset(void)
+{
+    integ = 0.0;
+}
+
+void speed_control(int motor, double target_speed)
+{
+    speed_control_measure(motor);
+    pwm_set_duty(motor, (float)speed_control_compute(target_speed, MAX_DUTY));
 }
 
 void speed_control_cleanup(void)
